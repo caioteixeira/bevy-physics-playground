@@ -24,20 +24,50 @@ fn setup_graphics(mut commands: Commands) {
         transform: Transform::from_xyz(-3.0, 3.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..Default::default()
     });
+
+    commands.spawn(PointLightBundle {
+        point_light: PointLight {
+            intensity: 1500.0,
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::from_xyz(4.0, 8.0, 4.0),
+        ..default()
+    });
 }
 
-fn setup_physics(mut commands: Commands) {
+fn setup_physics(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     /* Create the ground. */
     commands
         .spawn(Collider::cuboid(100.0, 0.1, 100.0))
-        .insert(TransformBundle::from(Transform::from_xyz(0.0, -2.0, 0.0)));
+        .insert(PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::Box::new(100.0, 0.1, 100.0))),
+            material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+            transform: Transform::from_xyz(0.0, -2.0, 0.0),
+            ..default()
+        });
 
     /* Create the bouncing ball. */
     commands
         .spawn(RigidBody::Dynamic)
         .insert(Collider::ball(0.5))
         .insert(Restitution::coefficient(0.7))
-        .insert(TransformBundle::from(Transform::from_xyz(0.0, 4.0, 0.0)));
+        .insert(PbrBundle {
+            mesh: meshes.add(
+                shape::UVSphere {
+                    radius: 0.5,
+                    ..default()
+                }
+                .into(),
+            ),
+            material: materials.add(Color::rgb(0.2, 0.1, 0.7).into()),
+            transform: Transform::from_xyz(0.0, 4.0, 0.0),
+            ..default()
+        });
 }
 
 fn print_ball_altitude(positions: Query<&Transform, With<RigidBody>>) {
