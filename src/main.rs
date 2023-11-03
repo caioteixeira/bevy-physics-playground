@@ -5,6 +5,7 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 
 use bevy::prelude::*;
+use bevy_fpc::FpcBundle;
 use bevy_rapier3d::prelude::*;
 
 fn main() {
@@ -12,19 +13,14 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugins(RapierDebugRenderPlugin::default())
-        .add_systems(Startup, setup_graphics)
-        .add_systems(Startup, setup_physics)
-        .add_systems(Update, print_ball_altitude)
+        .add_plugins(bevy_fpc::FpcPlugin)
+        .add_systems(Startup, setup_lights)
+        .add_systems(Startup, setup_physics_objects)
+        .add_systems(Startup, setup_character)
         .run();
 }
 
-fn setup_graphics(mut commands: Commands) {
-    // Add a camera so we can see the debug-render.
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(-3.0, 3.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..Default::default()
-    });
-
+fn setup_lights(mut commands: Commands) {
     commands.spawn(PointLightBundle {
         point_light: PointLight {
             intensity: 1500.0,
@@ -34,9 +30,14 @@ fn setup_graphics(mut commands: Commands) {
         transform: Transform::from_xyz(4.0, 8.0, 4.0),
         ..default()
     });
+
+    commands.insert_resource(AmbientLight {
+        brightness: 0.2,
+        ..Default::default()
+    });
 }
 
-fn setup_physics(
+fn setup_physics_objects(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -70,8 +71,9 @@ fn setup_physics(
         });
 }
 
-fn print_ball_altitude(positions: Query<&Transform, With<RigidBody>>) {
-    for transform in positions.iter() {
-        println!("Ball altitude: {}", transform.translation.y);
-    }
+fn setup_character(mut commands: Commands) {
+    commands
+        .spawn(FpcBundle::default())
+        .insert(bevy_fpc::Player)
+        .insert(TransformBundle::from(Transform::from_xyz(0., 2.75, 0.)));
 }
