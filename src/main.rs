@@ -66,15 +66,32 @@ fn setup_physics_objects(
                 .into(),
             ),
             material: materials.add(Color::rgb(0.2, 0.1, 0.7).into()),
-            transform: Transform::from_xyz(0.0, 4.0, 0.0),
+            transform: Transform::from_xyz(0.0, 100.0, 0.0),
             ..default()
         });
+
+    /* Create a wall of cubes */
+    for x in 0..10 {
+        for y in 0..5 {
+            for z in 0..3 {
+                commands
+                    .spawn(RigidBody::Dynamic)
+                    .insert(Collider::cuboid(0.5, 0.5, 0.5))
+                    .insert(PbrBundle {
+                        mesh: meshes.add(Mesh::from(shape::Box::new(1.0, 1.0, 1.0))),
+                        material: materials.add(Color::rgb(0.1, 0.1, 0.1).into()),
+                        transform: Transform::from_xyz(x as f32, 0.1 + y as f32, z as f32),
+                        ..default()
+                    });
+            }
+        }
+    }
 }
 
 fn setup_character(mut commands: Commands) {
     commands.spawn((
         Camera3dBundle {
-            transform: Transform::from_xyz(0.0, 2.0, 0.5),
+            transform: Transform::from_xyz(10.0, 2.0, 10.0),
             ..default()
         },
         FlyCam,
