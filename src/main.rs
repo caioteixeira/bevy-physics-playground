@@ -6,19 +6,23 @@
 
 use std::f32::consts::PI;
 
-use bevy::{pbr::CascadeShadowConfigBuilder, prelude::*};
+use bevy::prelude::*;
 use bevy_flycam::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
-        .add_plugins(RapierDebugRenderPlugin::default())
-        .add_plugins(NoCameraPlayerPlugin)
-        .add_systems(Startup, setup_lights)
-        .add_systems(Startup, setup_physics_objects)
-        .add_systems(Startup, setup_character)
+        .add_plugins((
+            DefaultPlugins,
+            RapierPhysicsPlugin::<NoUserData>::default(),
+            RapierDebugRenderPlugin::default(),
+            NoCameraPlayerPlugin,
+        ))
+        .add_systems(
+            Startup,
+            (setup_lights, setup_physics_objects, setup_character),
+        )
+        .add_systems(Update, launch_ball)
         .run();
 }
 
@@ -101,4 +105,39 @@ fn setup_character(mut commands: Commands) {
         },
         FlyCam,
     ));
+}
+
+fn launch_ball(
+    mut commands: Commands,
+    buttons: Res<Input<MouseButton>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    camera_query: Query<&Transform, With<Camera>>,
+) {
+    if buttons.just_pressed(MouseButton::Left) {
+        let camera_transform = camera_query.single();
+        let ball_position = camera_transform.translation + camera_transform.forward() * 2.0;
+
+        // TODO: I should probably be reusing the ball mesh and material
+        commands
+            .spawn(RigidBody::Dynamic)
+            .insert(Collider::ball(0.5))
+            .insert(Restitution::coefficient(0.7))
+            .insert(ExternalImpulse {
+                impulse: camera_transform.forward() * 50.0,
+                torque_impulse: Vec3::new(0.1, 0.1, 0.1),
+            })
+            .insert(PbrBundle {
+                mesh: meshes.add(
+                    shape::UVSphere {
+                        radius: 0.5,
+                        ..default()
+                    }
+                    .into(),
+                ),
+                material: materials.add(Color::rgb(0.2, 0.1, 0.7).into()),
+                transform: Transform::from_translation(ball_position),
+                ..default()
+            });
+    }
 }
