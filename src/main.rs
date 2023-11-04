@@ -4,7 +4,9 @@
 // Feel free to delete this line.
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 
-use bevy::prelude::*;
+use std::f32::consts::PI;
+
+use bevy::{pbr::CascadeShadowConfigBuilder, prelude::*};
 use bevy_flycam::prelude::*;
 use bevy_rapier3d::prelude::*;
 
@@ -21,19 +23,22 @@ fn main() {
 }
 
 fn setup_lights(mut commands: Commands) {
-    commands.spawn(PointLightBundle {
-        point_light: PointLight {
-            intensity: 1500.0,
+    commands.insert_resource(AmbientLight {
+        brightness: 0.3,
+        ..Default::default()
+    });
+
+    commands.spawn(DirectionalLightBundle {
+        directional_light: DirectionalLight {
             shadows_enabled: true,
             ..default()
         },
-        transform: Transform::from_xyz(4.0, 8.0, 4.0),
+        transform: Transform {
+            translation: Vec3::new(0.0, 2.0, 0.0),
+            rotation: Quat::from_rotation_x(-PI / 5.),
+            ..default()
+        },
         ..default()
-    });
-
-    commands.insert_resource(AmbientLight {
-        brightness: 0.2,
-        ..Default::default()
     });
 }
 
@@ -44,7 +49,7 @@ fn setup_physics_objects(
 ) {
     /* Create the ground. */
     commands
-        .spawn(Collider::cuboid(100.0, 0.1, 100.0))
+        .spawn(Collider::cuboid(50.0, 0.1, 50.0))
         .insert(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Box::new(100.0, 0.1, 100.0))),
             material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
