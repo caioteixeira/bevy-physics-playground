@@ -10,6 +10,14 @@ use bevy::prelude::*;
 use bevy_flycam::prelude::*;
 use bevy_rapier3d::prelude::*;
 
+#[derive(Resource)]
+struct SharedAssets {
+    ball_mesh: Handle<Mesh>,
+    ball_material: Handle<StandardMaterial>,
+    cube_mesh: Handle<Mesh>,
+    cube_material: Handle<StandardMaterial>,
+}
+
 fn main() {
     App::new()
         .add_plugins((
@@ -18,12 +26,32 @@ fn main() {
             RapierDebugRenderPlugin::default(),
             NoCameraPlayerPlugin,
         ))
+        .add_systems(PreStartup, setup_shared_assets)
         .add_systems(
             Startup,
             (setup_lights, setup_physics_objects, setup_character),
         )
         .add_systems(Update, launch_ball)
         .run();
+}
+
+fn setup_shared_assets(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    commands.insert_resource(SharedAssets {
+        ball_mesh: meshes.add(
+            shape::UVSphere {
+                radius: 0.5,
+                ..default()
+            }
+            .into(),
+        ),
+        ball_material: materials.add(Color::rgb(0.2, 0.1, 0.7).into()),
+        cube_mesh: meshes.add(Mesh::from(shape::Box::new(1.0, 1.0, 1.0))),
+        cube_material: materials.add(Color::rgb(0.1, 0.1, 0.1).into()),
+    });
 }
 
 fn setup_lights(mut commands: Commands) {
@@ -50,6 +78,7 @@ fn setup_physics_objects(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    shared_assets: Res<SharedAssets>,
 ) {
     /* Create the ground. */
     commands
@@ -67,14 +96,8 @@ fn setup_physics_objects(
         .insert(Collider::ball(0.5))
         .insert(Restitution::coefficient(0.7))
         .insert(PbrBundle {
-            mesh: meshes.add(
-                shape::UVSphere {
-                    radius: 0.5,
-                    ..default()
-                }
-                .into(),
-            ),
-            material: materials.add(Color::rgb(0.2, 0.1, 0.7).into()),
+            mesh: shared_assets.ball_mesh.clone(),
+            material: shared_assets.ball_material.clone(),
             transform: Transform::from_xyz(0.0, 100.0, 0.0),
             ..default()
         });
@@ -87,8 +110,8 @@ fn setup_physics_objects(
                     .spawn(RigidBody::Dynamic)
                     .insert(Collider::cuboid(0.5, 0.5, 0.5))
                     .insert(PbrBundle {
-                        mesh: meshes.add(Mesh::from(shape::Box::new(1.0, 1.0, 1.0))),
-                        material: materials.add(Color::rgb(0.1, 0.1, 0.1).into()),
+                        mesh: shared_assets.cube_mesh.clone(),
+                        material: shared_assets.cube_material.clone(),
                         transform: Transform::from_xyz(x as f32, 0.1 + y as f32, z as f32),
                         ..default()
                     });
@@ -110,15 +133,13 @@ fn setup_character(mut commands: Commands) {
 fn launch_ball(
     mut commands: Commands,
     buttons: Res<Input<MouseButton>>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
     camera_query: Query<&Transform, With<Camera>>,
+    shared_assets: Res<SharedAssets>,
 ) {
     if buttons.just_pressed(MouseButton::Left) {
         let camera_transform = camera_query.single();
         let ball_position = camera_transform.translation + camera_transform.forward() * 2.0;
 
-        // TODO: I should probably be reusing the ball mesh and material
         commands
             .spawn(RigidBody::Dynamic)
             .insert(Collider::ball(0.5))
@@ -128,14 +149,8 @@ fn launch_ball(
                 torque_impulse: Vec3::new(0.1, 0.1, 0.1),
             })
             .insert(PbrBundle {
-                mesh: meshes.add(
-                    shape::UVSphere {
-                        radius: 0.5,
-                        ..default()
-                    }
-                    .into(),
-                ),
-                material: materials.add(Color::rgb(0.2, 0.1, 0.7).into()),
+                mesh: shared_assets.ball_mesh.clone(),
+                material: shared_assets.ball_material.clone(),
                 transform: Transform::from_translation(ball_position),
                 ..default()
             });
