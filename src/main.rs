@@ -6,9 +6,10 @@
 
 use std::f32::consts::PI;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, render::view::screenshot::ScreenshotManager, window::PrimaryWindow};
 use bevy_flycam::prelude::*;
 use bevy_rapier3d::prelude::*;
+use rfd::FileDialog;
 
 #[derive(Resource)]
 struct SharedAssets {
@@ -29,9 +30,9 @@ fn main() {
         .add_systems(PreStartup, setup_shared_assets)
         .add_systems(
             Startup,
-            (setup_lights, setup_physics_objects, setup_character),
+            (setup_lights, setup_physics_objects, setup_camera, setup_ui),
         )
-        .add_systems(Update, launch_ball)
+        .add_systems(Update, (launch_ball, save_screenshot))
         .run();
 }
 
@@ -120,7 +121,7 @@ fn setup_physics_objects(
     }
 }
 
-fn setup_character(mut commands: Commands) {
+fn setup_camera(mut commands: Commands) {
     commands.spawn((
         Camera3dBundle {
             transform: Transform::from_xyz(10.0, 2.0, 10.0),
@@ -128,6 +129,54 @@ fn setup_character(mut commands: Commands) {
         },
         FlyCam,
     ));
+}
+
+fn setup_ui(mut commands: Commands) {
+    commands.spawn(
+        TextBundle::from_section(
+            "WASD : Move\n\
+            Space: Ascend\n\
+            Left Mouse Button: Shoot project\n\
+            Left Shift: Descend\n\
+            Esc: Grab/release cursor\n\
+            P: Take screenshot",
+            TextStyle {
+                font_size: 20.0,
+                color: Color::WHITE,
+                ..default()
+            },
+        )
+        .with_text_alignment(TextAlignment::Left)
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            bottom: Val::Px(5.0),
+            left: Val::Px(15.0),
+            ..default()
+        }),
+    );
+}
+
+fn save_screenshot(
+    input: Res<Input<KeyCode>>,
+    main_window: Query<Entity, With<PrimaryWindow>>,
+    mut screenshot_manager: ResMut<ScreenshotManager>,
+) {
+    if input.just_pressed(KeyCode::P) {
+        let path = FileDialog::new()
+            .add_filter("PNG Image", &["png"])
+            .set_file_name("screenshot.png")
+            .save_file();
+
+        match path {
+            Some(target_path) => {
+                info!("Saving screenshot to {}", target_path.to_str().unwrap());
+                screenshot_manager
+                    .save_screenshot_to_disk(main_window.single(), target_path)
+                    .unwrap();
+            }
+            None => info!("Screenshot cancelled"),
+        };
+    }
 }
 
 fn launch_ball(
