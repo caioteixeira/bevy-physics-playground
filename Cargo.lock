@@ -489,38 +489,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_fpc"
-version = "0.1.1"
+name = "bevy_flycam"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "121ab4c95a42a532f2f152c69f60a4a28a1937c02ca1e7b3c5b024299479e6af"
+checksum = "772406c17c1e0f595497a093adb7a1879ac10e444d8cc592ea54f1ab5168efb0"
 dependencies = [
  "bevy",
- "bevy_fpc_core",
- "bevy_fpc_sprint",
- "bevy_rapier3d",
- "log",
-]
-
-[[package]]
-name = "bevy_fpc_core"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99ee6a174c410e10eb1d25f74fc82e5f0534d9778df43449e6721037495c00c9"
-dependencies = [
- "bevy",
- "bevy_rapier3d",
-]
-
-[[package]]
-name = "bevy_fpc_sprint"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d33489a7673e8f8456acef99bb1fc1305b279575b3c3cd2c589bf952c635026"
-dependencies = [
- "bevy",
- "bevy_fpc_core",
- "bevy_rapier3d",
- "log",
 ]
 
 [[package]]
@@ -733,7 +707,7 @@ name = "bevy_physics_playground"
 version = "0.1.0"
 dependencies = [
  "bevy",
- "bevy_fpc",
+ "bevy_flycam",
  "bevy_rapier3d",
 ]
 

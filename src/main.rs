@@ -5,7 +5,7 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 
 use bevy::prelude::*;
-use bevy_fpc::FpcBundle;
+use bevy_flycam::prelude::*;
 use bevy_rapier3d::prelude::*;
 
 fn main() {
@@ -13,7 +13,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugins(RapierDebugRenderPlugin::default())
-        .add_plugins(bevy_fpc::FpcPlugin)
+        .add_plugins(NoCameraPlayerPlugin)
         .add_systems(Startup, setup_lights)
         .add_systems(Startup, setup_physics_objects)
         .add_systems(Startup, setup_character)
@@ -72,8 +72,11 @@ fn setup_physics_objects(
 }
 
 fn setup_character(mut commands: Commands) {
-    commands
-        .spawn(FpcBundle::default())
-        .insert(bevy_fpc::Player)
-        .insert(TransformBundle::from(Transform::from_xyz(0., 2.75, 0.)));
+    commands.spawn((
+        Camera3dBundle {
+            transform: Transform::from_xyz(0.0, 2.0, 0.5),
+            ..default()
+        },
+        FlyCam,
+    ));
 }
